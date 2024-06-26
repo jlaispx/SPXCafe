@@ -1,0 +1,12 @@
+SELECT 
+    c.courseName, 
+    m.mealName, 
+    m.mealPrice
+FROM 
+    courses AS c, 
+    meals AS m
+WHERE
+-- JOINS - use the PK/FK link or Relationship
+    c.courseId = m.course
+-- return only meals > $10
+AND m.mealPrice > 10

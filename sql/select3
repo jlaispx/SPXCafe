@@ -1,0 +1,12 @@
+SELECT 
+    c.courseName, 
+    m.mealName, 
+    m.mealPrice
+FROM 
+    courses AS c, 
+    meals AS m
+WHERE
+-- JOINS - use the PK/FK link or Relationship
+    c.courseId = m.course
+-- mealname > 'p'
+AND m.mealName > 'p'

@@ -1,0 +1,146 @@
+from SPXCafe import SPXCafe
+from rapidfuzz import process, fuzz, utils
+from Avatar import Avatar
+
+class Menu(SPXCafe):
+
+    def __init__(self):
+        super().__init__()
+        self.courses = None
+
+    def getCourses(self):
+        courses = []
+        sql = "SELECT courseId, courseName from courses ORDER BY courseId"
+        coursesData = self.dbGetData(sql)
+        if coursesData:
+            for course in coursesData:
+                courseName = course['courseName']
+                courses.append(courseName)
+        else:
+            print("No courses")
+        return courses
+
+    def showCourses(self):
+        self.courses = self.getCourses()
+        print("Courses List:")
+        for courseName in self.courses:
+            print(f"> {courseName.title()}")
+
+    # retrieve Meals for a Course or all Courses
+    def getMealsForCourse(self,courseName=None):
+        self.courses = self.getCourses()
+        if courseName not in self.courses:
+            print(f"Error: Course {courseName} does not exist")
+        else:
+            self.meals = {}  # empty dictionary
+            sql = f'''
+            SELECT m.mealName, m.mealPrice
+            FROM meals AS m, courses AS c
+            WHERE
+                c.courseID = m.courseId
+            AND c.courseName = '{courseName}'
+            ORDER BY m.mealName
+            '''
+            # sql = f"SELECT m.mealName, m.mealPrice FROM meals AS m, courses AS c WHERE c.courseID = m.courseId AND c.courseName = '{courseName}' ORDER BY m.mealName"
+
+            mealsData = self.dbGetData(sql)
+
+            if mealsData:
+                for meal in mealsData:
+                    mealName = meal['mealName']
+                    mealPrice = meal['mealPrice']
+                    self.meals[mealName] = mealPrice
+            else:
+                print(f"No Meals for {courseName.title()} course")
+            return self.meals
+
+    def getMealByName(self, mealName):
+        self.mealName = mealName
+        sql = f"SELECT mealId, mealPrice FROM meals WHERE mealName = {self.mealName}"
+
+        mealData = self.dbGetData(sql)
+        return mealData
+
+    def showMealsForCourse(self, courseName=None):
+        if courseName:
+            self.meals = self.getMealsForCourse(courseName)
+            print(f"{"-"*15} Course: {courseName.title():8s} {"-"*15}")
+            for mealName in self.meals:
+                mealPrice = self.meals[mealName]
+                print(f">>> {mealName.title():20s} ${mealPrice:.2f}")
+        else:
+            print(f"Error: Course not provided" )
+
+    def showMeals(self):
+        print("--------- MENU ---------")
+        self.courses = self.getCourses()
+        for courseName in self.courses:
+            self.showMealsForCourse(courseName)
+
+    # DB inserts and deletes
+    def insertMeal(self, courseName, mealName, mealPrice):
+        self.courses = self.getCourses()
+        mealId = None
+        if courseName in self.courses:
+            sql = f"SELECT courseId FROM courses WHERE courseName = '{courseName.lower()}'"
+            courseId = self.dbGetData(sql)[0]['courseId']
+            print(sql, courseId)
+            sql = f"INSERT INTO meals (mealName, mealPrice, courseId) VALUES ('{mealName.lower()}',{mealPrice},{courseId})"
+            print(sql)
+            mealId = self.dbPutData(sql)
+            print("new meal id",mealId)
+        return mealId
+
+    def deleteMeal(self, courseName, mealName):
+        self.courses = self.getCourses()
+        mealId = None
+        if courseName in self.courses:
+            sql = f"SELECT courseId FROM courses WHERE courseName = '{courseName.lower()}'"
+            courseId = self.dbGetData(sql)[0]['courseId']
+            print(sql, courseId)
+            sql = f"DELETE FROM meals WHERE mealName = '{mealName.lower()}' AND courseId = {courseId}"
+            print(sql)
+            self.dbChangeData(sql)
+            print("Delete meal ",mealName)
+        return mealId
+
+def main():
+    m = Menu()
+    m.showCourses()
+    m.showMeals()
+    m.insertMeal("entrees","prawn cocktail",5.40)
+    m.showMeals()
+    m.deleteMeal("entrees","prawn cocktail")
+    m.showMeals()
+
+    waiter = Avatar("luigi")
+    print(f"{",".join(m.getCourses())}")
+    waiter.say(m.showCourses())
+    choice = waiter.listen(f"Please choose a course from this list: {",".join(m.getCourses())} ")
+
+    (course, confidence, index) = process.extractOne(choice, m.getCourses(),scorer=fuzz.partial_ratio, processor=utils.default_process)
+
+    if confidence > 50:
+        waiter.say(f"You chose: {course}. Here is a list of meals for that course")
+
+        m.showMealsForCourse(course)
+
+        # get a list of meals for the waiter to speak and for fuzzy logic to check
+        meals = list(m.getMealsForCourse(course).keys())
+        print(meals)
+        meal = waiter.listen(f"Which meal do you want to order? ")
+
+        waiter.say(f"You said {meal}. Let me check the menu. Please wait. Please be patient. Ok?")
+        (mealChoice, confidence, index) = process.extractOne(meal, meals, scorer=fuzz.partial_ratio, processor=utils.default_process)
+
+        if confidence>50:
+            waiter.say(f"You chose {mealChoice} from the {course} menu. Thank you for your custom. Enjoy your meal. I mean it.")
+            mealPrice = 1.00
+        else:
+            waiter.say(f"Da shiizz...what meal is {meal}?")
+    else:
+        waiter.say(f"Say what?  What course is {course}?")
+
+
+if __name__=="__main__":
+    main()

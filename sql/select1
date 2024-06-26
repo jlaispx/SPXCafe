@@ -1,0 +1,17 @@
+-- READ QUERY - Build the menu
+SELECT 
+    c.courseName, 
+    m.mealName, 
+    m.mealPrice
+FROM 
+    courses AS c, 
+    meals AS m
+WHERE
+-- JOINS - use the PK/FK link or Relationship
+    c.courseId = m.course
+-- Filters by data
+AND (c.courseName = "entrees" OR c.courseName = "main")  
+ORDER BY
+    c.courseName,
+    m.mealPrice,
+    m.mealName

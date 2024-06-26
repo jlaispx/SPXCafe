@@ -1,0 +1,4 @@
+UPDATE meals
+SET mealName = "pumpkin soup"
+WHERE
+mealName = "soup"
