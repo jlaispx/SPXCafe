@@ -10,6 +10,7 @@ class Customer(SPXCafe):
             Arguments:
                 - must be either userName or customerId if existing
                 - no customerId if new Customer requested
+                - first name and last name can be passed in constructor to update or insert
 
         '''
         super().__init__()
