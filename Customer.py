@@ -1,5 +1,7 @@
-from Order import Order
-from OrderItem import OrderItem
+import Order
+import Meal
+# from OrderItem import OrderItem
+from Basket import Basket, BasketItem
 from SPXCafe import SPXCafe
 
 class Customer(SPXCafe):
@@ -19,10 +21,12 @@ class Customer(SPXCafe):
         self.setUserName(userName)
         self.setFirstName(firstName)
         self.setLastName(lastName)
-        # self.setOrders()
+        self.setOrders()
 
+        # If customer exists in database - retrieve data
         if self.existsDB():
-            self.setCustomer()
+            if not self.setCustomer():
+                print(f"Existing Customer: Either Customer Id <{self.getCustomerId()}> or UserName <{self.getUserName()}> is invalid ")
 
 
     # ------------ set up customer object data ------------
@@ -44,6 +48,33 @@ class Customer(SPXCafe):
                 if count > 0:
                     retcode = True
         return retcode
+
+    @classmethod
+    def findCustomer(cls, userName):
+        ''' Uses the Username to find a customer and return a Customer object matching it
+            findCustomer is a Class Method - that returns an object.
+
+            This is because we do not have a ready list of customer objects to scan through.
+
+            So we need to rely on a DB SQL search to find the customer by userName - similar to existsDB method which is an instance method not a class method.
+
+            Once we are sure it exists in the database, we can then create a new customer object
+            passing it the userName - that customer object retrieves all the order information as part of
+            its construction
+        '''
+        customer = None
+        spxcafe = SPXCafe()
+        if userName:
+            sql = f"SELECT count(*) AS count FROM customers WHERE userName='{userName}'"
+            if sql:
+                countData = spxcafe.dbGetData(sql)
+                if countData:
+                    for countRec in countData:
+                        count = int(countRec['count'])
+                    if count > 0:
+                        # create a customer object for the username if found
+                        customer = Customer(userName=userName)
+        return customer
 
     def setCustomer(self,userName=None,customerId=None):
         ''' Creates Customer Object from database info
@@ -76,12 +107,12 @@ class Customer(SPXCafe):
         if customerData:
             # Exiting Customer - should only be ONE customer
             for customer in customerData:
-                self.customerId = customer['customerId']
-                self.userName   = customer['userName']
-                self.firstName  = customer['firstName']
-                self.lastName   = customer['lastName']
+                self.setCustomerId(customer['customerId'])
+                self.setUserName(customer['userName'])
+                self.setFirstName(customer['firstName'])
+                self.setLastName(customer['lastName'])
                 # Call ORDER factory method to return a list of Order objects/instances - pass self to it
-                # self.setOrders(Order.getOrders(self))
+                self.setOrders(Order.Order.getOrders(self))
                 retcode = True
 
         return retcode
@@ -101,8 +132,8 @@ class Customer(SPXCafe):
             sql = f'''INSERT INTO customers (userName, firstName, lastName) VALUES
                 ('{self.getUserName()}','{self.getFirstName()}','{self.getLastName()}')'''
             print(sql)
-            self.customerId = self.dbPutData(sql)
-            # self.setCustomerID(self.dbPutData(sql))
+            # self.customerId = self.dbPutData(sql)
+            self.setCustomerId(self.dbPutData(sql))
 
     # ----- get/sets customer data  -------
 
@@ -145,6 +176,9 @@ class Customer(SPXCafe):
         else:
             self.orders = []
 
+    def addOrder(self, order):
+        self.orders.append(order)
+
     # ----- formatted displays -------
     # str function allows you to simply print(customerInstance)
     def __str__(self):
@@ -173,26 +207,46 @@ class Customer(SPXCafe):
 
     # ----- Adhoc methods
 
-    def newCustomerOrder(self,orderDate=None):
-        return
+    def newOrder(self, basket=None):
+        ''' create a new Order and ask it to add the meals'''
+        order = Order.Order(customer=self)
+        order.save()
+        # self.addOrder(order)
+        # For each meal object ask the Order to add an OrderItem
+        order.addBasket(basket=basket)
+        # rebuild the customer's orders list
+        self.setOrders(Order.Order.getOrders(self))
+        # return the order for further processing
+        return order
 
-    def addOrder(self, order=None):
-        self.orders.append(order)
 
 
 def main():
-
-    bloggs = Customer("bloggs")
+    bloggs = Customer.findCustomer("bloggs")
     bloggs.display()
     bloggs.displayOrders()
 
     #new customer called jim jones
-    jones=Customer(userName="jonesj2",firstName="Jim",lastName="Jones")
+    jones = Customer(userName="jonesj4",firstName="Jim",lastName="Jones")
     jones.save()
     jones.display()
-    orders = jones.getOrders()
-    for order in orders:
-        order.display()
+
+    # Simulate getting a list of meals to add to an Order
+    basket = Basket()
+    for mealId in range(1,3):
+        meal = Meal.Meal(mealId=mealId)
+        quantity = 1
+        basketItem = BasketItem(meal, quantity)
+        basket.addItem(basketItem)
+
+    basket.displayBasket()
+
+    order = jones.newOrder(basket)
+    order.display()
+
+    # orders = jones.getOrders()
+    # for order in orders:
+    #     order.display()
 
 if __name__=="__main__":
     main()

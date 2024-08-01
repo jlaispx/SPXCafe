@@ -2,12 +2,12 @@
 from Avatar import Avatar
 from Customer import Customer
 from SPXCafe import SPXCafe
-from Order import Order
-from OrderItem import OrderItem
+# from Order import Order
+# from OrderItem import OrderItem
 from Menu import Menu
-from Course import Course
-from Meal import Meal
-# Import system packages
+# from Course import Course
+# from Meal import Meal
+# # Import system packages
 from NLP import NLP
 from rapidfuzz import fuzz, process, utils
 from rapidfuzz.fuzz import partial_ratio
@@ -15,18 +15,21 @@ from rapidfuzz.fuzz import partial_ratio
 class Cafe(SPXCafe):
 
     def __init__(self, cafeName):
-
+        ''' Constructor method
+        '''
         self.waiter = Avatar("Luigi")
         self.setCafeName(cafeName)
         self.menu = Menu('Dinner Menu')
 
     def setCafeName(self,cafeName):
+        '''Set the cafe name'''
         if cafeName:
             self.cafeName = cafeName
         else:
             self.cafeName = "Cafe Unknown"
 
     def getCafeName(self):
+        ''' get cafe name'''
         if self.cafeName:
             return self.cafeName
         else:
@@ -54,16 +57,15 @@ class Cafe(SPXCafe):
 
     def welcomeCustomer(self):
         self.waiter.say(f"Buon Giorno!  Welcome to {self.getCafeName()}")
-
         while True:
+            self.waiter.say("If you are an existing customer, please type in your username or leave it blank if you are a new customer.")
+            userName = self.waiter.listen("Enter Username or leave blank:", useSR=False).lower().strip()
 
-            userName = "bloggs"
-            # self.waiter.say("Can you please enter your username?")
-            # userName = self.waiter.listen("Please enter a User Name: ",useSR=False).lower().strip()
+            # If a Username is provided, then retrieve information
+            if userName:
+                self.customer = Customer.findCustomer(userName=userName)
 
-            self.customer = Customer(userName=userName)
-
-            self.waiter.say(f"Welcome back {self.customer.firstName} {self.customer.lastName}")
+                self.waiter.say(f"Welcome back {self.customer.firstName} {self.customer.lastName}")
 
             # isCustomer = (self.waiter.listen("Have you ordered with us before? Y/N").strip().lower()[0])=="y"
             # if self.customer.existsDB():

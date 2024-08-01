@@ -3,7 +3,7 @@ import Course
 from rapidfuzz.fuzz import QRatio, partial_ratio, ratio, WRatio
 
 class Meal(SPXCafe):
-
+    ''' Meal Class - holds information about a Meal'''
     def __init__(self,mealId=None,mealName=None,mealPrice=None,courseId=None,course=None):
 
         super().__init__()
@@ -16,12 +16,12 @@ class Meal(SPXCafe):
 
         # This checks if Meal already exists...if so, just load it.
         if self.existsDB():
-            if not self.setMeal():
+            if not self.setMeal(course=course):
                 print(f"Meal: Meal Id <{self.getMealId()}> is invalid ")
         else:
             self.save()
 
-    def setMeal(self, mealId=None):
+    def setMeal(self, mealId=None,course=None):
         '''Set the Meal Attributes with values from Database for a mealId '''
         retcode = False
         if mealId:
@@ -72,7 +72,7 @@ class Meal(SPXCafe):
         return self.__mealId
 
     def getMealName(self):
-        return self.__mealName
+        return self.__mealName.title()
 
     def getMealPrice(self):
         return self.__mealPrice
@@ -148,7 +148,7 @@ class Meal(SPXCafe):
                 mealId = {self.getMealId()}
         '''
         # print(sql)
-        SPXCafe.dbChangeData(sql)
+        self.dbChangeData(sql)
 
     @classmethod
     def getMeals(cls,course):
@@ -172,50 +172,6 @@ class Meal(SPXCafe):
                 meals.append(meal)
 
         return meals
-
-    # @classmethod
-    # def findMeals(cls,course=None,mealName=None):
-    #     '''Find Meals for a Course object/instance - example of Aggregation'''
-    #     meals=[]
-    #     if course:
-    #         sql = f"SELECT mealId, mealName, mealPrice, courseId FROM meals WHERE courseId={course.getCourseId()}"
-    #         # print(f"Get all meals: {sql}")
-
-    #         mealsData = SPXCafe().dbGetData(sql)
-
-    #         for mealData in mealsData:
-    #             # create a new instance
-    #             meal = cls.__new__(cls)
-    #             meal.setMealId(mealData['mealId'])
-    #             meal.setMealName(mealData['mealName'])
-    #             meal.setMealPrice(mealData['mealPrice'])
-    #             meal.setCourseId(mealData['courseId'])
-    #             meal.setCourse(course)
-    #             # add meal object to meals list
-
-    #             if partial_ratio(mealName, meal.getMealName())>60:
-    #                 meals.append(meal)
-
-    #     else:
-    #         sql = "SELECT mealId, mealName, mealPrice, courseId FROM meals"
-    #         mealsData = SPXCafe().dbGetData(sql)
-    #         for mealData in mealsData:
-    #             # create a new instance
-    #             meal = cls.__new__(cls)
-    #             meal.setMealId(mealData['mealId'])
-    #             meal.setMealName(mealData['mealName'])
-    #             meal.setMealPrice(mealData['mealPrice'])
-    #             meal.setCourseId(mealData['courseId'])
-    #             meal.setCourse(Course.Course(courseId=meal.getCourseId()))
-    #             # add meal object to meals list
-
-    #             confidence = partial_ratio(mealName, meal.getMealName())
-    #             # print(f"{confidence}% for {mealName} in {meal.getMealName()}")
-    #             if confidence > 80:
-    #                 meals.append(meal)
-
-
-    #     return meals
 
     def findMeal(self,searchMeal=None):
         if searchMeal:

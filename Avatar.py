@@ -36,7 +36,7 @@ class Avatar:
         self.sample_rate = 48000
         self.chunk_size = 2048
         self.r = sr.Recognizer()
-        self.useSR = True  # set this to True if using Speech Recognition
+        self.useSR = False  # set this to True if using Speech Recognition
 
     def initVoice(self):
         '''
@@ -49,12 +49,17 @@ class Avatar:
         self.__engine.setProperty('voice', self.__voice)
         self.__engine.setProperty('rate', 150)
         self.__engine.setProperty('volume', 1.0)
+        self.displayOnly = True
 
-    def say(self, words, display=False):
-        if display:
+    def say(self, words, display=False, displayOnly=None):
+        if displayOnly == None:
+            displayOnly = self.displayOnly
+        if display or displayOnly:
             print(words)
-        self.__engine.say(words, self.name)
-        self.__engine.runAndWait()
+
+        if not displayOnly:
+            self.__engine.say(words, self.name)
+            self.__engine.runAndWait()
 
     def listen(self, prompt="I am listening, please speak:",useSR=None):
         words = ""
@@ -78,11 +83,11 @@ class Avatar:
                     self.say("Could not request results; {0}".format(e))
 
             except:
-                self.say(prompt, False)
-                words = input(f"{prompt}")
+                self.say(prompt, True)
+                words = input(": ")
         else:
             self.say(prompt, False)
-            words = input(prompt)
+            words = input(": ")
         return words
 
     def introduce(self):

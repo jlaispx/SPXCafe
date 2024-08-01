@@ -1,5 +1,7 @@
 from SPXCafe import SPXCafe
 import OrderItem
+import Customer
+from Basket import Basket
 from datetime import datetime
 
 class Order(SPXCafe):
@@ -19,16 +21,13 @@ class Order(SPXCafe):
 
         self.setOrderId(orderId)
         self.setOrderDate(orderDate)
-        # get customer object and retrieve customer Id
-        # cannot use customer object as circular referencing when
-        # creating a new Customer when retrieving data from database
         self.setCustomer(customer)
         self.setOrderItems()
 
         # If order exists, then get attributes from Database
         if self.existsDB():
-            if not self.setOrder(self.orderId):
-                print(f"Order: Order Id <{self.getOrderId()}> is invalid ")
+            if not self.setOrder(self.__orderId):
+                print(f"Existing Order: Order Id <{self.getOrderId()}> is invalid ")
 
     def existsDB(self):
         '''Checks if order exists in database'''
@@ -55,15 +54,16 @@ class Order(SPXCafe):
             Returns True or False if DB data found or not.
         '''
         retCode = False
+        print(f"Getting order: {orderId}")
         if orderId:
             sql = f"SELECT orderId, orderDate, customerId FROM orders WHERE orderId = {orderId}"
-            # print(sql)
+            print(sql)
             orderData = self.dbGetData(sql)  # should only be one
             if orderData:
                 for order in orderData:
                     self.setOrderId(order['orderId'])
                     # self.setCustomerId(order['customerId'])
-                    self.setCustomerId(order['customerId'])
+                    self.setCustomer(Customer.Customer(order["customerId"]))
                     self.setOrderDate(order['orderDate'])
 
                     # Using OOP Aggregation - we store a list of OrderItem objects with the Order.
@@ -74,7 +74,7 @@ class Order(SPXCafe):
 
         return retCode
 
-    def saveOrder(self):
+    def save(self):
         ''' Save Order Method:
             Saves the Order details back to the database
             If existing Order: then UPDATES the data in the database
@@ -84,20 +84,20 @@ class Order(SPXCafe):
         '''
         retcode = False
         # validate compulsory data before saving
-        if not (self.orderDate and self.customer):
-            print("Order: Save: missing mandatory data")
+        if not (self.getOrderDate() and self.getCustomer()):
+            print("Order: Save: missing mandatory data - orderDate or Customer")
             print(self)
         # if orderId exists - then update record otherwise insert new record
         else:
             # Update Existing
-            if self.orderId:
-                sql = f"UPDATE orders SET customerId={self.getCustomerId()}, orderDate='{self.orderDate}' WHERE orderId = {self.orderId}"
+            if self.__orderId:
+                sql = f"UPDATE orders SET customerId={self.__customer.getCustomerId()}, orderDate='{self.getOrderDate()}' WHERE orderId = {self.getOrderId()}"
                 self.dbChangeData(sql)
                 retcode = True
             else:
             # Insert NEW
-                sql = f"INSERT INTO orders (customerId, orderDate) VALUES ({self.getCustomerId()},'{self.orderDate}')"
-                self.orderId = self.dbPutData(sql)
+                sql = f"INSERT INTO orders (customerId, orderDate) VALUES ({self.__customer.getCustomerId()},'{self.getOrderDate()}')"
+                self.setOrderId(self.dbPutData(sql))
                 retcode = True
 
         return retcode
@@ -105,13 +105,13 @@ class Order(SPXCafe):
     def __str__(self):
         ''' returns object as a string for human reading
         '''
-        return f"Order: {self.orderId:2d} - CustId: {self.getCustomerId():2d} - Order Date: '{self.orderDate}'"
+        return f"Order: {self.__orderId:2d} - CustId: {self.__customer.getCustomerId():2d} - Order Date: '{self.__orderDate}'"
 
     def display(self):
 
         print(self)
-        if self.orderItems:
-            for orderItem in self.orderItems:
+        if self.__orderItems:
+            for orderItem in self.__orderItems:
                 orderItem.display()
             print(f"{'-'*55} Order Total: ${self.getOrderTotal():6.2f}")
         else:
@@ -132,52 +132,63 @@ class Order(SPXCafe):
         orders = []
         for order in ordersData:
             newOrder =cls.__new__(cls)
-            newOrder.orderId    = order['orderId']
-            newOrder.orderDate  = order['orderDate']
-            newOrder.customerId = order['customerId']
-            newOrder.setOrderItems(OrderItem.OrderItem.getOrderItems(newOrder))
+            newOrder.setOrderId(order['orderId'])
+            newOrder.setOrderDate(order['orderDate'])
+            newOrder.setCustomer(customer) # bidirectional pointer to customer object
+            newOrder.setOrderItems(OrderItem.OrderItem.getOrderItems(order=newOrder))
             orders.append(newOrder)
         return orders
 
 
     ## Object GETS/SETS
     def getOrderId(self):
-        return self.orderId
+        return self.__orderId
 
     def getCustomer(self):
         '''return customer object related to this order'''
-        return self.customer
+        return self.__customer
 
-    def getCustomerId(self):
-        return self.customerId
+    # def getCustomerId(self):
+    #     # return self.__customerId
+    #     return self.__customer.getCustomerId()
 
     def getOrderDate(self):
-        return self.orderDate
+        return self.__orderDate
 
     def getOrderItems(self):
-        return self.orderItems
+        return self.__orderItems
 
     def getOrderTotal(self):
         total = 0
-        if self.orderItems:
-            for orderItem in self.orderItems:
+        if self.__orderItems:
+            for orderItem in self.__orderItems:
                 total += orderItem.getMealPrice()
         return total
 
     #-----------------------------------
     def setOrderId(self,orderId):
-        self.orderId = orderId
+        self.__orderId = orderId
 
-    def setCustomer(self,customer):
-        '''store customer object for order - use customer id from now '''
-        self.customer = customer
-        self.setCustomerId(self.customer.getCustomerId())
+    def setCustomer(self,customer=None):
+        '''store customer object for order - use customer id if no customer object '''
+        if customer:
+            self.__customer = customer
+        #     self.setCustomerId(self.__customer.getCustomerId())
+        # elif self.__customer.getCustomerId():
+        #     self.__customer = Customer.Customer(customerId=self.__customer.getCustomerId())
+        else:
+            self.__customer = None
 
-    def setCustomerId(self, customerId):
-        self.customerId = customerId
+    # def setCustomerId(self, customerId=None):
+    #     self.__customerId = customerId
 
     def setOrderDate(self,orderDate):
-        self.orderDate = orderDate
+        ''' Set the order date - if missing default to today '''
+        if orderDate:
+            self.__orderDate = orderDate
+        else:
+            # Default to today's date for the order
+            self.__orderDate = datetime.today().strftime('%Y-%m-%d')
 
     def setOrderItems(self,orderItems=None):
         '''
@@ -185,25 +196,39 @@ class Order(SPXCafe):
             Note: OrderItems List is retrieved by calling OrderItem Factory Method called getOrderItems()
         '''
         if orderItems:
-            self.orderItems = orderItems
+            self.__orderItems = orderItems
         else:
-            self.orderItems = []
-        # print(f"Set Order Items: {self.orderItems}")
+            self.__orderItems = []
+        # print(f"Set Order Items: {self.__orderItems}")
+
+    def addBasket(self, basket):
+        '''For each basketItem add an orderItem - then refresh the orderitems list for this order'''
+        if basket:
+            for basketItem in basket.getBasket():
+                self.addOrderItem(basketItem)
+        # rebuild all the order items for this Order
+        self.setOrderItems(OrderItem.OrderItem.getOrderItems(self))
+
+    def addOrderItem(self,basketItem=None):
+        '''For each basketItem - add an OrderItem object and save to DB '''
+        meal        = basketItem.getMeal()
+        quantity    = basketItem.getQuantity()
+        orderItem   = OrderItem.OrderItem(order=self, meal=meal, quantity=quantity)
+        orderItem.save()
 
 
 def main():
-# retrieve an order
+    '''Test Harness for this class'''
+    # retrieve an order
     print("Getting Order 1 details")
-    order = Order(1)
+    order = Order(orderId=6)
     print(order)
     order.display()
 
 # create a new order
     print("Creating NEW order")
-    order = Order()
-    order.setCustomerId(1)
-    order.setOrderDate(self.getToday())
-    order.saveOrder()
+    customer = Customer.Customer(customerId=1)
+    order = Order(customer=customer)
     print(order)
 
 if __name__ == "__main__":
