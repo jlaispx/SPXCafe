@@ -21,6 +21,15 @@ class Cafe(SPXCafe):
         self.setCafeName(cafeName)
         self.menu = Menu('Dinner Menu')
 
+        # Main Menu Options #
+        self.viewOrderHistory = ["history","past"]
+        self.viewMenu = ["menu"]
+        self.orderFood = ["order","buy"]
+        self.exit = ["exit","leave","bye"]
+        self.mainOptions = self.viewOrderHistory + self.viewMenu + self.orderFood + self.exit
+
+
+
     def setCafeName(self,cafeName):
         '''Set the cafe name'''
         if cafeName:
@@ -43,29 +52,48 @@ class Cafe(SPXCafe):
             print("Cannot order if there is Customer.")
 
 
+    def getChoice(self,request=None, options=None):
+        ''' Check of "Choice" is in one of the "Options'''
+        results = process.extractOne(request, options, scorer=fuzz.partial_ratio, processor=utils.default_process)
+        # return [choice, cofidence]
+        return results
 
-
-    # def getChoice(self,choice=None, options=None):
-    #     [results = process.extract(choice, options, scorer=fuzz.partial_ratio, processor=utils.default_process)
-
-    # def getChoices(self,choice=None, options=None):
-
-    #     results = process.extract(choice, options, scorer=fuzz.partial_ratio, processor=utils.default_process)
-
-    #     return results
+    def getChoices(self,request=None, options=None):
+        ''' This returns multiple values that match your request'''
+        results = process.extract(request, options, scorer=fuzz.partial_ratio, processor=utils.default_process)
+        # return an set of choices [(choice,confidence),(choice,confidence)...]
+        return results
 
 
     def welcomeCustomer(self):
+        ''' Keep looping until we find a customer record or create a new customer record '''
         self.waiter.say(f"Buon Giorno!  Welcome to {self.getCafeName()}")
-        while True:
+
+        self.customer = None
+        while not self.customer:
             self.waiter.say("If you are an existing customer, please type in your username or leave it blank if you are a new customer.")
-            userName = self.waiter.listen("Enter Username or leave blank:", useSR=False).lower().strip()
+            userName = self.waiter.listen("Enter Username or leave blank for a new Customer or 'exit' to leave:", useSR=False).lower().strip()
+
+            [exitRequest, confidence] = self.getChoice(userName, self.exit)
+            if confidence > 60:
+                self.waiter.say("Oh, you have changed your mind? Ok, no problems.")
+                return False
 
             # If a Username is provided, then retrieve information
             if userName:
                 self.customer = Customer.findCustomer(userName=userName)
+                if self.customer:
+                    self.waiter.say(f"Welcome back {self.customer.getFirstName()} {self.customer.getLastName()}")
+                else:
+                    self.waiter.say(f"I am sorry, we cannot find '{userName}' in our records. Please try again")
+            else:
+                self.createNewCustomer()
 
-                self.waiter.say(f"Welcome back {self.customer.firstName} {self.customer.lastName}")
+        return True
+
+    def createNewCustomer(self,userName=None):
+
+        self.waiter.say(f"Ah, ok this is your first time!")
 
             # isCustomer = (self.waiter.listen("Have you ordered with us before? Y/N").strip().lower()[0])=="y"
             # if self.customer.existsDB():
@@ -82,12 +110,38 @@ class Cafe(SPXCafe):
             #         self.customer.save()
             #         print(f"Welcome{customer.getCustomerName()}. Your customer number is {self.customer.getCustomerId()}")
 
-    def getMainMenuOption(self):
-        mainOptions = ["history","menu","order","exit"]
+    def processMainMenuChoice(self):
 
-        self.waiter.say(f"Ok {self.customer.getFirstName()}. What would you like to do?")
-        self.waiter.say("You can View Your Order History, View the Menu or Order Food or leave/exit")
-        response = self.waiter.listen("Please tell me your choice").strip().lower()
+        running = True
+        while running:
+            self.waiter.say(f"Ok {self.customer.getFirstName()}. What would you like to do?")
+            self.waiter.say("You can View Your Order History, View the Menu or Order Food or leave/exit")
+            response = self.waiter.listen("Please tell me your choice").strip().lower()
+
+            [choice, confidence] = getChoice(response, self.mainOptions)
+
+            if confidence > 60:
+                match choice:
+                    case a if a in self.viewOrderHistory:
+                        self.viewOrderHistory()
+                    case a if a in self.viewMenu:
+                        self.viewMenu()
+                    case a if a in self.orderFood:
+                        self.orderFood()
+                    case a if a in self.exit:
+                        self.exit()
+                        running = False
+            else:
+                self.waiter.say(f"I am sorry, I do not understand '{response}'. Please try again.")
+
+            self.waiter.say(f"Thank you {self.customer.getFirstName()}")
+
+    def sayGoodbye(self):
+        if self.customer:
+            self.waiter.say(f"Thank you for joining us today, {self.customer.getFirstName()}.  Goodbye for now from {self.cafeName}")
+        else:
+            self.waiter.say(f"Sorry to see you go. We hope you order food with us next time. Goodbye from {self.cafeName}")
+
 
 
 def main():
@@ -97,13 +151,18 @@ def main():
     while True:
         match useCase:
             case 1:                             # Use Case 1: Get a Customer
-                cafeItalia.welcomeCustomer()
-                useCase = 2
+                if cafeItalia.welcomeCustomer():
+                    useCase = 2
+                else:
+                    useCase = 3
 
             case 2:                             # Use Case 2: Get Main Menu choices
-                continue
+                choice = cafeItalia.processMainMenuChoice()
+                useCase = 3
 
-
+            case 3:                             # Use Case 3: exit
+                cafeItalia.sayGoodbye()
+                break
 
 
 if __name__=="__main__":
