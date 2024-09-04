@@ -263,6 +263,10 @@ class Cafe(SPXCafe):
         ''' PROCESS CUSTOMER ORDERING FOOD '''
 
         # Initialise sub requests used only during ordering of food
+        self.orderMealRequest = {
+            "keywords":     ["add","order"],
+            "response":     "add a meal to the basket"
+        }
         self.stopRequest =     {
             "keywords":     ["finish", "stop","complete"],
             "response":     "finish ordering food"
@@ -272,7 +276,7 @@ class Cafe(SPXCafe):
             "response":     "view the basket"
         }
 
-        self.orderingOptions = self.menuRequest["keywords"] + self.stopRequest["keywords"] + self.viewBasketRequest["keywords"]
+        self.orderingOptions = self.orderMealRequestRequest["keywords"] + self.menuRequest["keywords"] + self.stopRequest["keywords"] + self.viewBasketRequest["keywords"]
 
         # Initialise an empty basket
         self.basket = Basket()
@@ -287,7 +291,12 @@ class Cafe(SPXCafe):
 
             choice = self.getChoice(request,self.orderingOptions)
             if choice:  # did the request match one of the ordering options?
+                # ''' A MEAL ORDERED '''
                 match choice:
+                    case a if a in self.orderMealRequest["keywords"]:
+                        self.waiter.say(f"You have requested to {self.orderMealRequest["response"]}")
+                        self.addMealToBasket(request)
+
                     # ''' FINISH ORDERING '''
                     case a if a in self.stopRequest["keywords"]:
                         self.waiter.say(f"You have requested to {self.stopRequest["response"]}")
@@ -306,10 +315,11 @@ class Cafe(SPXCafe):
                         response = self.viewBasketRequest["response"]
                         self.waiter.say(f"Sure {self.getCustomer().getFirstName()}, here is the current Basket contents...")
                         self.basket.displayBasket()
+
+                    case _:
+                        self.waiter.say(f"Sorry, I did not understand your request. You said '{choice}'.")
             else:
-                # ''' ASSUME A MEAL ORDERED '''
-                # check if choice is a meal
-                self.addMealToBasket(request)
+                self.waiter.say(f"Sorry, you did not make a request.")
 
 
     def addMealToBasket(self,searchMeal=None):

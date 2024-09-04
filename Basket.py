@@ -92,4 +92,4 @@ class BasketItem():
             return 0
 
     def __str__(self):
-        return f"Meal: {self.getMeal()}, Quantity: {self.getQuantity()}  Cost: ${self.getCost():.2f}"
+        return f"{self.getMeal()}, Quantity: {self.getQuantity()}  Cost: ${self.getCost():.2f}"
