@@ -1,5 +1,5 @@
 import Order
-import Meal
+# import Meal
 # from OrderItem import OrderItem
 from Basket import Basket, BasketItem
 from SPXCafe import SPXCafe
@@ -209,16 +209,18 @@ class Customer(SPXCafe):
 
     def newOrder(self, basket=None):
         ''' create a new Order and ask it to add the meals'''
-        order = Order.Order(customer=self)
-        order.save()
-        # self.addOrder(order)
-        # For each meal object ask the Order to add an OrderItem
-        order.addBasket(basket=basket)
-        # rebuild the customer's orders list
-        self.setOrders(Order.Order.getOrders(self))
-        # return the order for further processing
-        return order
+        if basket:
+            order = Order.Order(customer=self)
+            order.save()
+            # For each meal object ask the Order to add an OrderItem
+            order.addBasket(basket=basket)
 
+            # rebuild the customer's orders list
+            self.setOrders(Order.Order.getOrders(self))
+            # return the order for further processing
+        else:
+            order = None
+        return order
 
 
 def main():
@@ -226,23 +228,25 @@ def main():
     bloggs.display()
     bloggs.displayOrders()
 
-    #new customer called jim jones
-    jones = Customer(userName="jonesj4",firstName="Jim",lastName="Jones")
-    jones.save()
-    jones.display()
+    # #new customer called jim jones - if exists returns existing customer
+    # jones = Customer(userName="jonesj4",firstName="Jim",lastName="Jones")
+    # jones.save()
+    # jones.display()
 
-    # Simulate getting a list of meals to add to an Order
-    basket = Basket()
-    for mealId in range(1,3):
-        meal = Meal.Meal(mealId=mealId)
-        quantity = 1
-        basketItem = BasketItem(meal, quantity)
-        basket.addItem(basketItem)
+    # # Simulate getting a list of meals to add to an Order
+    # basket = Basket()
+    # items = 3
+    # quantity=0
+    # for mealId in range(3,items+4):
+    #     meal = Meal.Meal(mealId=mealId)
+    #     quantity += 1
+    #     basketItem = BasketItem(meal, quantity)
+    #     basket.addItem(basketItem)
 
-    basket.displayBasket()
+    # basket.displayBasket()
 
-    order = jones.newOrder(basket)
-    order.display()
+    # order = jones.newOrder(basket)
+    # order.display()
 
     # orders = jones.getOrders()
     # for order in orders:

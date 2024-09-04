@@ -11,10 +11,11 @@ options = ["hawaiian pizza","supreme pizza","pizza marinara", "fish fillets","ic
 
 # print(f"You have chosen : {match} with confidence level of {confidence}%")
 matches = []
-maxConfidence = 0
+maxConfidence = 60
 
 while len(matches)!=1:
-    choice = input(f"Choose from: {','.join(options)}: ").strip().lower()
+    # choice = input(f"Choose from: {','.join(options)}: ").strip().lower()
+    choice = input(f"Choose one").strip().lower()
     if not choice:
         break
 

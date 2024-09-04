@@ -105,7 +105,7 @@ class OrderItem(SPXCafe):
         '''formal display of orderItem'''
         # print("DISPLAY ORDER ITEM")
         # print(self)
-        print(f"<{self.__order.getOrderId():2d}-{self.getOrderItemId():2d}> ({self.__meal.getMealId():2d}) {self.__meal.getMealName():30s} - ${self.getMealPrice():5.2f} ")
+        print(f"<{self.__order.getOrderId():2d}-{self.getOrderItemId():2d}> ({self.__meal.getMealId():2d}) {self.__meal.getMealName():30s} - ${self.getMealPrice():5.2f} x {self.getQuantity():2d} = ${(self.getMealPrice()*self.getQuantity()):6.2f}")
 
     def __str__(self):
         ''' "To String" Method - returns an object as a string for human reading
@@ -207,25 +207,26 @@ class OrderItem(SPXCafe):
 def main():
     '''Test Harness for the OrderItem Class'''
 # retrieve an order
-    print("Retrieve Order Item 1:")
-    orderItem = OrderItem(orderItemId=1)
+    orderItemId = 1
+    print(f"Retrieve Order Item {orderItemId}:")
+    orderItem = OrderItem(orderItemId=orderItemId)
     orderItem.display()
 #    print(orderItem)
 
-    print("Update Order Item")
-    orderItem.setMealPrice(3.99)
-    orderItem.save()
-    orderItem.display()
-#    print(orderItem)
+#     print("Update Order Item")
+#     orderItem.setMealPrice(3.99)
+#     orderItem.save()
+#     orderItem.display()
+# #    print(orderItem)
 
-# create a new order item for an order and meal
-    order = Order.Order(orderId=6)
-    meal = Meal.Meal(mealId=1)
+# # create a new order item for an order and meal
+#     order = Order.Order(orderId=6)
+#     meal = Meal.Meal(mealId=1)
 
-    print("Create new OrderItem")
-    orderItem = OrderItem(order=order, meal=meal, quantity=2)
-    orderItem.display()
-#    print(orderItem)
+#     print("Create new OrderItem")
+#     orderItem = OrderItem(order=order, meal=meal, quantity=2)
+#     orderItem.display()
+# #    print(orderItem)
 
 if __name__ == "__main__":
     main()

@@ -4,7 +4,7 @@ from Order import Order
 
 class Orders(Database):
 
-    def __init__(self,dbname, customerId=None):
+    def __init__(self,orderId=None, customerId=None):
         super().__init__(dbname)
         self.orders = None
         self.customerId = customerId
@@ -67,7 +67,7 @@ class Orders(Database):
                 rowId = 0
                 for orderItem in orderItems:
                     rowId += 1
-                    orderItemId = orderItem['orderItemId']
+                    orderItemId = orderItem.getOrderItemId() #['orderItemId']
                     mealId      = orderItem['mealId']
                     mealName    = orderItem['mealName']
                     quantity    = orderItem['quantity']

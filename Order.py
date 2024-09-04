@@ -54,21 +54,21 @@ class Order(SPXCafe):
             Returns True or False if DB data found or not.
         '''
         retCode = False
-        print(f"Getting order: {orderId}")
+        # print(f"Getting order: {orderId}")
         if orderId:
             sql = f"SELECT orderId, orderDate, customerId FROM orders WHERE orderId = {orderId}"
-            print(sql)
+            # print(sql)
             orderData = self.dbGetData(sql)  # should only be one
             if orderData:
                 for order in orderData:
                     self.setOrderId(order['orderId'])
                     # self.setCustomerId(order['customerId'])
-                    self.setCustomer(Customer.Customer(order["customerId"]))
+                    self.setCustomer(Customer.Customer(customerId=order["customerId"]))
                     self.setOrderDate(order['orderDate'])
 
                     # Using OOP Aggregation - we store a list of OrderItem objects with the Order.
                     # information for OrderItem is delegated to the OrderItem Objects
-                    print("Getting orderitems - passing Order object")
+                    # print("Getting orderitems - passing Order object")
                     self.setOrderItems(OrderItem.OrderItem.getOrderItems(self))
                 retCode = True
 
@@ -105,15 +105,17 @@ class Order(SPXCafe):
     def __str__(self):
         ''' returns object as a string for human reading
         '''
-        return f"Order: {self.__orderId:2d} - CustId: {self.__customer.getCustomerId():2d} - Order Date: '{self.__orderDate}'"
+        return f"Order#: {self.getOrderId():2d} - Cust#: {self.getCustomer().getCustomerId():2d} - Order Date: '{self.getOrderDateF()}'"
 
     def display(self):
 
+        print("="*67)
         print(self)
         if self.__orderItems:
             for orderItem in self.__orderItems:
                 orderItem.display()
-            print(f"{'-'*55} Order Total: ${self.getOrderTotal():6.2f}")
+            print("="*67)
+            print(f"{' '*46} Order Total: ${self.getOrderTotal():6.2f}")
         else:
             print(f"{"-"*25} No Order Items {"-"*25}")
 
@@ -153,7 +155,13 @@ class Order(SPXCafe):
     #     return self.__customer.getCustomerId()
 
     def getOrderDate(self):
+        ''' get raw order date as YYYY-MM-DD '''
         return self.__orderDate
+
+    def getOrderDateF(self):
+        '''get formatted order date as DD MMMM YYYY'''
+        return datetime.strptime(self.getOrderDate(), "%Y-%m-%d").strftime("%d %b %Y")
+        # return self.__orderDate
 
     def getOrderItems(self):
         return self.__orderItems
@@ -162,7 +170,7 @@ class Order(SPXCafe):
         total = 0
         if self.__orderItems:
             for orderItem in self.__orderItems:
-                total += orderItem.getMealPrice()
+                total += orderItem.getMealPrice() * orderItem.getQuantity()
         return total
 
     #-----------------------------------
@@ -220,16 +228,16 @@ class Order(SPXCafe):
 def main():
     '''Test Harness for this class'''
     # retrieve an order
-    print("Getting Order 1 details")
+    # print("Getting Order 1 details")
     order = Order(orderId=6)
     print(order)
     order.display()
 
 # create a new order
-    print("Creating NEW order")
-    customer = Customer.Customer(customerId=1)
-    order = Order(customer=customer)
-    print(order)
+    # print("Creating NEW order")
+    # customer = Customer.Customer(customerId=1)
+    # order = Order(customer=customer)
+    # print(order)
 
 if __name__ == "__main__":
     main()

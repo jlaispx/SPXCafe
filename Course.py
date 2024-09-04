@@ -80,22 +80,23 @@ class Course(SPXCafe):
                     meals.append(result)
         return meals
 
-    def findCourse(self, searchCourse=None):
-        if searchCourse:
-            if self.isMatch(searchCourse):
-                return self
-
-        return None
+    # @classmethod
+    # def findCourse(cls, searchCourse=None):
+    #     if searchCourse:
+    #         if self.isMatch(searchCourse):
+    #             return self
+    #     return None
 
     def isMatch(self, courseName=None):
-        confidence = partial_ratio(courseName, self.getCourseName())
-        print(courseName, self.getCourseName(), confidence)
-        if confidence>80:
-            return True
+        if courseName:
+            confidence = partial_ratio(courseName.lower(), self.getCourseName().lower())
+            print(courseName, self.getCourseName(), confidence)
+            if confidence>80:
+                return True
+            else:
+                return False
         else:
             return False
-
-
 
     def __str__(self):
         '''return a stringified version of object for printing'''
@@ -179,12 +180,12 @@ class Course(SPXCafe):
 def main():
     '''Test Harness to make sure all methods work'''
 
-    course = Course(1)
-    course.display()
-    course.setCourseName(course.getCourseName()+"X")
-    course.save()
-    course = Course(1)
-    course.display()
+    # course = Course(1)
+    # course.display()
+    # course.setCourseName(course.getCourseName()+"X")
+    # course.save()
+    # course = Course(1)
+    # course.display()
 
     searchMeal = input("Search Meal: ").lower().strip()
     meals = course.findMeal(searchMeal)
@@ -195,12 +196,12 @@ def main():
     else:
         print(f"'{searchMeal}' not found")
 
-    searchCourse = input("Search Course? ").lower().strip()
-    course = course.findCourse(searchCourse)
-    if course:
-        print(f"Search result for '{searchCourse}'is '{course.getCourseName()}' ")
-    else:
-        print(f"'{searchCourse}' was not found!")
+    # searchCourse = input("Search Course? ").lower().strip()
+    # course = course.isMatch(searchCourse)
+    # if course:
+    #     print(f"Search result for '{searchCourse}'is '{course.getCourseName()}' ")
+    # else:
+    #     print(f"'{searchCourse}' was not found!")
 
     # course1 = Course(courseName="New Course")
     # course1.save()

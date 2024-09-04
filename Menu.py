@@ -48,13 +48,14 @@ class Menu(SPXCafe):
         '''returns a string for the Menu object for printing this object'''
         return f"{self.getMenuName()} Menu"
 
-    def display(self):
+    def display(self,searchCourseName=None):
         '''Display this Menu instance more formally'''
         print(f"{'-'*25} {self.getMenuName()} {'-'*25}\n")
 
         if self.getCourses():
             for course in self.getCourses():
-                course.display()
+                if not searchCourseName or (searchCourseName and course.getCourseName() == searchCourseName):
+                    course.display()
 
     def displayCourses(self):
         '''Display all the Courses in a comma-separated string '''
@@ -78,7 +79,8 @@ class Menu(SPXCafe):
         courses = []
         if searchCourse:
             for course in self.getCourses():
-                courses.append(course.findCourse(searchCourse))
+                if course.isMatch():
+                    courses.append(course)
         return courses
 
 def main():
@@ -103,6 +105,7 @@ def main():
     if courses:
         print("We have found the following course(s): ")
         for course in courses:
+            print(f">>> {course.getCourseName()}")
             course.display()
     else:
         print(f"'{searchCourse}' not found")

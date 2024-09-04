@@ -47,7 +47,7 @@ class Avatar:
         self.__vix = 1
         self.__voice = self.__voices[self.__vix].id
         self.__engine.setProperty('voice', self.__voice)
-        self.__engine.setProperty('rate', 150)
+        self.__engine.setProperty('rate', 250)
         self.__engine.setProperty('volume', 1.0)
         self.displayOnly = True
 

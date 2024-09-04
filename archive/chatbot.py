@@ -26,13 +26,24 @@ class Chatbot():
                 "keywords":     ["history", "previous"],
                 "response":     "see your previous orders"
         }
-        self.menuRequest =      [["menu", "course", "meal","choice","options"],     "see the menu"]
-        self.orderRequest =     [["order", "buy","food"],                           "order some food"]
-        # self.exitRequest =      [["exit","leave","bye"],                            "leave us now"]
-        self.historyRequest =   [["history", "previous"],                           "see your previous orders"]
-        self.menuRequest =      [["menu", "course", "meal","choice","options"],     "see the menu"]
-        self.orderRequest =     [["order", "buy","food"],                           "order some food"]
-        self.mainOptions = self.exitRequest["keywords"] + self.historyRequest[0] + self.menuRequest[0] + self.orderRequest[0]
+        self.menuRequest =      {
+                "keywords":     ["menu", "course", "meal","choice","options"],
+                "response":     "see the menu"
+        }
+        self.orderRequest =     {
+                "keywords":     ["order", "buy","food"],
+                "response":     "order some food"
+        }
+
+        # self.menuRequest =      [["menu", "course", "meal","choice","options"],     "see the menu"]
+        # self.orderRequest =     [["order", "buy","food"],                           "order some food"]
+
+        # # self.exitRequest =      [["exit","leave","bye"],                            "leave us now"]
+        # self.historyRequest =   [["history", "previous"],                           "see your previous orders"]
+        # self.menuRequest =      [["menu", "course", "meal","choice","options"],     "see the menu"]
+        # self.orderRequest =     [["order", "buy","food"],                           "order some food"]
+
+        self.mainOptions = self.exitRequest["keywords"] + self.historyRequest["keywords"] + self.menuRequest["keywords"] + self.orderRequest["keywords"]
 
 
     def getOptions(self,choice=None, options=None):

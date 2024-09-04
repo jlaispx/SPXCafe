@@ -1,12 +1,13 @@
 from SPXCafe import SPXCafe
 import Course
-from rapidfuzz.fuzz import QRatio, partial_ratio, ratio, WRatio
+from rapidfuzz.fuzz import QRatio, partial_ratio, ratio, WRatio, token_set_ratio
 
 class Meal(SPXCafe):
     ''' Meal Class - holds information about a Meal'''
     def __init__(self,mealId=None,mealName=None,mealPrice=None,courseId=None,course=None):
 
         super().__init__()
+        self.setConfidenceLevel(80)
 
         self.setMealId(mealId)
         self.setMealName(mealName)
@@ -181,10 +182,24 @@ class Meal(SPXCafe):
         return None
 
     def isMatch(self, mealName=None):
-        confidence = partial_ratio(mealName.lower(), self.getMealName().lower())
-        print(f"isMatch? '{mealName}' matches '{self.getMealName()}'  with {confidence:.2f}% confidence")
-        if confidence>80:
-            return True
+        # print(f"checking {mealName} is Meal-{self.getMealName()}")
+        if mealName:
+            if len(mealName) <= len(self.getMealName()):
+                part1 = mealName
+                part2 = self.getMealName()
+            else:
+                part1 = self.getMealName()
+                part2 = mealName
+            confidence = partial_ratio(part1.lower(), part2.lower())
+            confidence2 = ratio(mealName.lower(), self.getMealName().lower())
+            confidence3 = token_set_ratio(mealName.lower(), self.getMealName().lower())
+            confidence4 = QRatio(mealName.lower(), self.getMealName().lower())
+            confidence5 = WRatio(mealName.lower(), self.getMealName().lower())
+            print(f"isMatch? '{mealName}' matches '{self.getMealName()}'  with {confidence:.2f}% {confidence2:.2f}% {confidence3:.2f}% {confidence4:.2f}% {confidence5:.2f}% confidence")
+            if confidence > 80:  #self.getConfidenceLevel():
+                return True
+            else:
+                return False
         else:
             return False
 
@@ -203,7 +218,8 @@ def main():
     # # meal.save()
     # meal.display()
 
-    searchMeal = "stake"
+    searchMeal = "Fruit Salad"
+    print(f"Searching for '{searchMeal}'")
     if meal.isMatch(searchMeal):
         print("match")
     else:
@@ -212,6 +228,8 @@ def main():
     foundMeal = meal.findMeal(searchMeal)
     if foundMeal:
         foundMeal.display()
+    else:
+        print("not found")
 
 
 
